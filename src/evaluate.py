@@ -6,10 +6,7 @@ import matplotlib.pyplot as plt
 import os
 
 def evaluate_model(model, test_loader, class_names, device=None, model_path=None):
-    """
-    Avalia o modelo no test_loader.
-    Se model_path for fornecido, carrega os pesos antes de avaliar.
-    """
+
     if device is None:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)

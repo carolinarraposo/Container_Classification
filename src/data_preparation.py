@@ -7,10 +7,6 @@ from torch.utils.data import DataLoader, Dataset, random_split, WeightedRandomSa
 from torchvision import datasets, transforms
 from collections import Counter
 
-# =====================================================
-# 0. DATA EXPLORATION
-# =====================================================
-
 def get_class_names(dataset_path):
     return sorted([
         c for c in os.listdir(dataset_path)
@@ -60,10 +56,6 @@ def show_example_per_class(dataset_path):
     plt.show()
 
 
-# =====================================================
-# 1. TRANSFORM APLICADOS A CADA CONJUNTO
-# =====================================================
-
 def get_train_transforms(img_size=224):
     return transforms.Compose([
         transforms.Resize((img_size, img_size)),
@@ -76,7 +68,6 @@ def get_train_transforms(img_size=224):
 
 
 def get_eval_transforms(img_size=224):
-    """Transform para validação E teste (sem augmentações)."""
     return transforms.Compose([
         transforms.Resize((img_size, img_size)),
         transforms.ToTensor(),
@@ -84,10 +75,6 @@ def get_eval_transforms(img_size=224):
                              [0.229, 0.224, 0.225])
     ])
 
-
-# =====================================================
-# 2. DATALOADERS COM DIVISÃO CORRETA DE DATASETS
-# =====================================================
 
 def get_dataloaders(
     dataset_path,
@@ -97,7 +84,6 @@ def get_dataloaders(
     test_split=0.1
 ):
 
-    # Dataset SEM transform — transforms são aplicados depois ao subset correto
     base_dataset = datasets.ImageFolder(dataset_path)
 
     class_names = base_dataset.classes
@@ -107,24 +93,18 @@ def get_dataloaders(
     val_size = int(total * val_split)
     train_size = total - val_size - test_size
 
-    # Divide indices, não datasets
     train_indices, val_indices, test_indices = random_split(
         range(total), [train_size, val_size, test_size]
     )
 
-    # Cria datasets separados, cada um com o seu transform
     train_dataset = datasets.ImageFolder(dataset_path, transform=get_train_transforms(img_size))
     val_dataset   = datasets.ImageFolder(dataset_path, transform=get_eval_transforms(img_size))
     test_dataset  = datasets.ImageFolder(dataset_path, transform=get_eval_transforms(img_size))
 
-    # Aplica só os índices correspondentes
     train_dataset = torch.utils.data.Subset(train_dataset, train_indices)
     val_dataset   = torch.utils.data.Subset(val_dataset,   val_indices)
     test_dataset  = torch.utils.data.Subset(test_dataset,  test_indices)
 
-    # ---------------------------
-    # BALANCED SAMPLER (opcional mas útil)
-    # ---------------------------
     train_labels = [base_dataset.targets[i] for i in train_indices]
     counts = Counter(train_labels)
     weights = [1.0 / counts[l] for l in train_labels]
@@ -135,7 +115,6 @@ def get_dataloaders(
         replacement=True
     )
 
-    # LOADERS
     train_loader = DataLoader(train_dataset, batch_size=batch_size, sampler=sampler)
     val_loader   = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
     test_loader  = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
