@@ -13,9 +13,8 @@ torch.manual_seed(42)
 np.random.seed(42)
 random.seed(42)
 
-
 DATASET_PATH = "../dataset_waste_container"
-SAVE_PATH = "best_model.pth"
+SAVE_PATH = "../models/best_model.pth"
 
 def main():
 

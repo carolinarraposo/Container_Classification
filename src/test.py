@@ -12,7 +12,7 @@ import torch.nn.functional as F
 # --- Configurações ---
 BASE_DIR = 'dataset_waste_container'
 OUTPUT_CSV = 'scores_simulados.csv'
-MODEL_PATH = 'best_model.pth'
+MODEL_PATH = '../models/best_model.pth'
 NUM_CLASSES = 7
 
 test_transform = transforms.Compose([

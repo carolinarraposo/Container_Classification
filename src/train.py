@@ -15,7 +15,7 @@ def train_model(
     lr=1e-4,
     weight_decay=1e-4,
     patience=5,
-    save_path="best_model.pth"
+    save_path="../models/best_model.pth"
 ):
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
