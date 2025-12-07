@@ -1,11 +1,14 @@
+#data_preparation.py
+
 import os
 import random
 import matplotlib.pyplot as plt
-import torch
 from PIL import Image
-from torch.utils.data import DataLoader, Dataset, random_split, WeightedRandomSampler
+from torch.utils.data import DataLoader, random_split, WeightedRandomSampler
 from torchvision import datasets, transforms
 from collections import Counter
+import torch
+
 
 def get_class_names(dataset_path):
     return sorted([
@@ -18,10 +21,8 @@ def count_images_per_class(dataset_path):
     counts = {}
     for cls in get_class_names(dataset_path):
         cls_path = os.path.join(dataset_path, cls)
-        images = [
-            f for f in os.listdir(cls_path)
-            if f.lower().endswith(("jpg", "jpeg", "png"))
-        ]
+        images = [f for f in os.listdir(cls_path)
+                  if f.lower().endswith(("jpg", "jpeg", "png"))]
         counts[cls] = len(images)
     return counts
 
@@ -30,7 +31,7 @@ def print_dataset_summary(dataset_path):
     print("\n=== DATASET SUMMARY ===\n")
     counts = count_images_per_class(dataset_path)
     for cls, n in counts.items():
-        print(f"{cls}: {n} imagens")
+        print(f"{cls}: {n} images")
     print("\n=======================\n")
 
 
@@ -40,10 +41,8 @@ def show_example_per_class(dataset_path):
 
     for i, cls in enumerate(class_names):
         cls_path = os.path.join(dataset_path, cls)
-        images = [
-            f for f in os.listdir(cls_path)
-            if f.lower().endswith(("jpg", "jpeg", "png"))
-        ]
+        images = [f for f in os.listdir(cls_path)
+                  if f.lower().endswith(("jpg", "jpeg", "png"))]
         img_path = os.path.join(cls_path, random.choice(images))
         img = Image.open(img_path).convert("RGB")
 
@@ -58,14 +57,16 @@ def show_example_per_class(dataset_path):
 
 def get_train_transforms(img_size=224):
     return transforms.Compose([
-        transforms.Resize((img_size, img_size)),
+        transforms.RandomResizedCrop(img_size, scale=(0.7, 1.0)),
         transforms.RandomHorizontalFlip(),
         transforms.RandomRotation(10),
+        transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3),
+        transforms.RandomAffine(degrees=10, translate=(0.1, 0.1)),
         transforms.ToTensor(),
+        transforms.RandomErasing(p=0.25),
         transforms.Normalize([0.485, 0.456, 0.406],
                              [0.229, 0.224, 0.225])
     ])
-
 
 def get_eval_transforms(img_size=224):
     return transforms.Compose([
@@ -76,16 +77,19 @@ def get_eval_transforms(img_size=224):
     ])
 
 
+# =====================================================
+# 2. DATALOADERS COM SPLITS CONSISTENTES
+# =====================================================
+
 def get_dataloaders(
     dataset_path,
     img_size=224,
-    batch_size=32,
+    batch_size=64,
     val_split=0.2,
-    test_split=0.1
+    test_split=0.2
 ):
 
     base_dataset = datasets.ImageFolder(dataset_path)
-
     class_names = base_dataset.classes
     total = len(base_dataset)
 
@@ -93,27 +97,26 @@ def get_dataloaders(
     val_size = int(total * val_split)
     train_size = total - val_size - test_size
 
-    train_indices, val_indices, test_indices = random_split(
-        range(total), [train_size, val_size, test_size]
+    # seed fixo
+    generator = torch.Generator().manual_seed(42)
+
+    train_idx, val_idx, test_idx = random_split(
+        range(total), [train_size, val_size, test_size], generator=generator
     )
 
     train_dataset = datasets.ImageFolder(dataset_path, transform=get_train_transforms(img_size))
     val_dataset   = datasets.ImageFolder(dataset_path, transform=get_eval_transforms(img_size))
     test_dataset  = datasets.ImageFolder(dataset_path, transform=get_eval_transforms(img_size))
 
-    train_dataset = torch.utils.data.Subset(train_dataset, train_indices)
-    val_dataset   = torch.utils.data.Subset(val_dataset,   val_indices)
-    test_dataset  = torch.utils.data.Subset(test_dataset,  test_indices)
+    train_dataset = torch.utils.data.Subset(train_dataset, train_idx)
+    val_dataset   = torch.utils.data.Subset(val_dataset,   val_idx)
+    test_dataset  = torch.utils.data.Subset(test_dataset,  test_idx)
 
-    train_labels = [base_dataset.targets[i] for i in train_indices]
+    # sampler balanceado
+    train_labels = [base_dataset.targets[i] for i in train_idx]
     counts = Counter(train_labels)
     weights = [1.0 / counts[l] for l in train_labels]
-
-    sampler = WeightedRandomSampler(
-        weights=weights,
-        num_samples=len(weights),
-        replacement=True
-    )
+    sampler = WeightedRandomSampler(weights, num_samples=len(weights), replacement=True)
 
     train_loader = DataLoader(train_dataset, batch_size=batch_size, sampler=sampler)
     val_loader   = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)

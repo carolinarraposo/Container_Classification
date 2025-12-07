@@ -1,10 +1,12 @@
+#test.py
+
 import numpy as np
 import pandas as pd
 import os
 import torch
 from torchvision import transforms
 from PIL import Image
-from model import create_model   # usa o teu modelo
+from model import create_model
 import torch.nn.functional as F
 
 # --- Configurações ---
@@ -13,7 +15,6 @@ OUTPUT_CSV = 'scores_simulados.csv'
 MODEL_PATH = 'best_model.pth'
 NUM_CLASSES = 7
 
-# Transformações IGUAIS às do teste no teu projeto
 test_transform = transforms.Compose([
     transforms.Resize((224, 224)),
     transforms.ToTensor(),
@@ -25,10 +26,6 @@ test_transform = transforms.Compose([
 # --------------------------------------------------------------------------
 
 def classifier_score(img_tensor, model, device):
-    """
-    Recebe a imagem transformada e devolve os scores (probabilidades)
-    para cada uma das 7 classes.
-    """
 
     img_tensor = img_tensor.unsqueeze(0).to(device)  # (1, C, H, W)
 
@@ -41,7 +38,6 @@ def classifier_score(img_tensor, model, device):
 
 def run_test():
 
-    # --- Pré-carregar o modelo ---
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     model = create_model(num_classes=NUM_CLASSES)
