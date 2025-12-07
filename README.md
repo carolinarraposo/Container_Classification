@@ -13,6 +13,12 @@ O projeto requer as seguintes bibliotecas Python, que podem ser instaladas atrav
 pip install -r requirements.txt
 ```
 
+Para executar o treino e avaliação:
+
+```bash
+python src/main.py
+```
+
 ##  Estrutura do Repositório
 ```
 ├── dataset_waste_container
@@ -39,6 +45,6 @@ pip install -r requirements.txt
 │
 └── README.md
 ```
-
+---
 
 
