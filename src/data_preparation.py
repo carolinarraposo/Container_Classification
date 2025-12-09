@@ -77,10 +77,6 @@ def get_eval_transforms(img_size=224):
     ])
 
 
-# =====================================================
-# 2. DATALOADERS COM SPLITS CONSISTENTES
-# =====================================================
-
 def get_dataloaders(
     dataset_path,
     img_size=224,
@@ -97,7 +93,6 @@ def get_dataloaders(
     val_size = int(total * val_split)
     train_size = total - val_size - test_size
 
-    # seed fixo
     generator = torch.Generator().manual_seed(42)
 
     train_idx, val_idx, test_idx = random_split(
@@ -112,7 +107,6 @@ def get_dataloaders(
     val_dataset   = torch.utils.data.Subset(val_dataset,   val_idx)
     test_dataset  = torch.utils.data.Subset(test_dataset,  test_idx)
 
-    # sampler balanceado
     train_labels = [base_dataset.targets[i] for i in train_idx]
     counts = Counter(train_labels)
     weights = [1.0 / counts[l] for l in train_labels]
